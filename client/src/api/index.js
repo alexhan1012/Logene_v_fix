@@ -1,11 +1,28 @@
 import axios from 'axios';
 
-export const SERVER_BASE = 'http://localhost:3001';
-const API_BASE = `${SERVER_BASE}/api`;
+const DEFAULT_SERVER = 'http://localhost:3001';
+
+function getServerBase() {
+  try {
+    return localStorage.getItem('server_url') || DEFAULT_SERVER;
+  } catch {
+    return DEFAULT_SERVER;
+  }
+}
+
+export function getServerBaseUrl() {
+  return getServerBase();
+}
+
+export const SERVER_BASE = DEFAULT_SERVER;
 
 const client = axios.create({
-  baseURL: API_BASE,
-  timeout: 30000,
+  timeout: 120000,
+});
+
+client.interceptors.request.use((config) => {
+  config.baseURL = `${getServerBase()}/api`;
+  return config;
 });
 
 client.interceptors.response.use(

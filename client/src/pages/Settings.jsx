@@ -54,6 +54,10 @@ export default function Settings() {
   const handleSave = async (values) => {
     setSaving(true);
     try {
+      // Save server URL to localStorage for client-side API routing
+      if (values.server_url) {
+        localStorage.setItem('server_url', values.server_url);
+      }
       await api.settings.update(values);
       message.success('设置保存成功');
     } catch (err) {

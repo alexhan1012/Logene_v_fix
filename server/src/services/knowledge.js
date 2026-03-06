@@ -1,4 +1,5 @@
 const fs = require('fs');
+const fsPromises = require('fs/promises');
 const path = require('path');
 const pool = require('../db/pool');
 const volcEngine = require('./volcEngine');
@@ -224,9 +225,11 @@ class KnowledgeService {
       data.error_image_path !== existing.error_image_path
     ) {
       const oldPath = path.join(config.upload.dir, path.basename(existing.error_image_path));
-      fs.unlink(oldPath, (err) => {
-        if (err) console.warn('Failed to delete old image:', err.message);
-      });
+      try {
+        await fsPromises.unlink(oldPath);
+      } catch (err) {
+        console.warn('Failed to delete old image:', err.message);
+      }
     }
 
     return rows[0];
@@ -246,9 +249,11 @@ class KnowledgeService {
         config.upload.dir,
         path.basename(existing.error_image_path)
       );
-      fs.unlink(filePath, (err) => {
-        if (err) console.warn('Failed to delete image file:', err.message);
-      });
+      try {
+        await fsPromises.unlink(filePath);
+      } catch (err) {
+        console.warn('Failed to delete image file:', err.message);
+      }
     }
 
     return true;

@@ -19,7 +19,7 @@ import {
   DeleteOutlined,
   CalendarOutlined,
 } from '@ant-design/icons';
-import api, { SERVER_BASE } from '../api';
+import api, { getServerBaseUrl } from '../api';
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -75,7 +75,7 @@ export default function KnowledgeDetail() {
   }
 
   const imageUrl = data.error_image_path
-    ? `${SERVER_BASE}${data.error_image_path}`
+    ? `${getServerBaseUrl()}${data.error_image_path}`
     : null;
 
   return (
