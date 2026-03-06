@@ -1,0 +1,14 @@
+node_modules/
+dist/
+out/
+build/
+.env
+*.log
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+coverage/
+.vite/
+release/
+uploads/
