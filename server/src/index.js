@@ -7,6 +7,7 @@ const fs = require('fs');
 
 const config = require('./config');
 const initDatabase = require('./db/init');
+const { apiLimiter, writeLimiter } = require('./middleware/rateLimiter');
 
 const knowledgeRoutes = require('./routes/knowledge');
 const searchRoutes = require('./routes/search');
@@ -40,9 +41,9 @@ app.get('/api/health', (_req, res) => {
 });
 
 // Routes
-app.use('/api/knowledge', knowledgeRoutes);
-app.use('/api/search', searchRoutes);
-app.use('/api/settings', settingsRoutes);
+app.use('/api/knowledge', apiLimiter, knowledgeRoutes);
+app.use('/api/search', writeLimiter, searchRoutes);
+app.use('/api/settings', apiLimiter, settingsRoutes);
 app.use('/api/models', (req, res) => {
   // Convenience alias so GET /api/models also works
   const volcEngine = require('./services/volcEngine');
