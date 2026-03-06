@@ -1,29 +1,30 @@
 import React, { useEffect, useState } from 'react'
-import { Row, Col, Card, Statistic, List, Avatar, Typography, Spin, Empty, Tag } from 'antd'
-import { DatabaseOutlined, CalendarOutlined, SearchOutlined, FileImageOutlined } from '@ant-design/icons'
+import { Row, Col, Card, Statistic, List, Avatar, Typography, Spin, Empty } from 'antd'
+import { DatabaseOutlined, CalendarOutlined, ClockCircleOutlined, FileImageOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 
 const { Text, Title } = Typography
 
 export default function Dashboard({ baseURL }) {
-  const [stats, setStats] = useState({ total: 0, thisMonth: 0 })
+  const [stats, setStats] = useState({ total: 0, this_month: 0, today: 0 })
   const [recent, setRecent] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function load() {
       try {
-        const res = await fetch(`${baseURL}/api/entries?page=1&pageSize=5`)
-        const data = await res.json()
-        if (data.success) {
-          setStats({ total: data.total, thisMonth: 0 })
-          setRecent(data.data)
-          const now = dayjs()
-          const thisMonthCount = data.data.filter(e =>
-            dayjs(e.created_at).month() === now.month() &&
-            dayjs(e.created_at).year() === now.year()
-          ).length
-          setStats({ total: data.total, thisMonth: thisMonthCount })
+        const [statsRes, recentRes] = await Promise.all([
+          fetch(`${baseURL}/api/entries/stats`),
+          fetch(`${baseURL}/api/entries?page=1&pageSize=5`),
+        ])
+        const statsData = await statsRes.json()
+        const recentData = await recentRes.json()
+
+        if (statsData.success) {
+          setStats(statsData.data)
+        }
+        if (recentData.success) {
+          setRecent(recentData.data)
         }
       } catch (e) {
         console.error(e)
@@ -61,7 +62,7 @@ export default function Dashboard({ baseURL }) {
           <Card style={cardStyle('linear-gradient(135deg, #f093fb 0%, #f5576c 100%)')}>
             <Statistic
               title={<span style={{ color: 'rgba(255,255,255,0.85)' }}>本月新增</span>}
-              value={stats.thisMonth}
+              value={stats.this_month}
               prefix={<CalendarOutlined />}
               valueStyle={{ color: '#fff', fontSize: 32 }}
             />
@@ -70,9 +71,9 @@ export default function Dashboard({ baseURL }) {
         <Col xs={24} sm={12} lg={8}>
           <Card style={cardStyle('linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)')}>
             <Statistic
-              title={<span style={{ color: 'rgba(255,255,255,0.85)' }}>已支持模型</span>}
-              value={3}
-              prefix={<SearchOutlined />}
+              title={<span style={{ color: 'rgba(255,255,255,0.85)' }}>今日新增</span>}
+              value={stats.today}
+              prefix={<ClockCircleOutlined />}
               valueStyle={{ color: '#fff', fontSize: 32 }}
             />
           </Card>

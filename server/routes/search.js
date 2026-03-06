@@ -2,9 +2,10 @@ import { Router } from 'express'
 import multer from 'multer'
 import path from 'path'
 import { fileURLToPath } from 'url'
-import { readFileSync, mkdirSync, unlinkSync } from 'fs'
+import { readFileSync, mkdirSync } from 'fs'
 import { getPool, getSettings } from '../services/db.js'
 import { analyzeImageWithVLM, analyzeTextWithModel, generateEmbedding } from '../services/volcanoEngine.js'
+import { cleanupFile } from '../utils/fileCleanup.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const UPLOADS_DIR = path.join(__dirname, '../../uploads')
@@ -43,9 +44,7 @@ router.post('/', upload.single('image'), async (req, res) => {
         console.error('VLM analysis failed:', e.message)
         searchText = query
       } finally {
-        try { unlinkSync(imageFile.path) } catch (cleanupErr) {
-          console.error('Failed to clean up temp file:', cleanupErr.message)
-        }
+        cleanupFile(imageFile.path)
       }
     } else if (query) {
       try {
@@ -83,13 +82,10 @@ router.post('/', upload.single('image'), async (req, res) => {
 
     res.json({ success: true, data: result.rows, analysis })
   } catch (err) {
-    if (imageFile) {
-      try { unlinkSync(imageFile.path) } catch (cleanupErr) {
-        console.error('Failed to clean up temp file:', cleanupErr.message)
-      }
-    }
+    cleanupFile(imageFile?.path)
     res.status(500).json({ success: false, error: err.message })
   }
 })
 
 export default router
+

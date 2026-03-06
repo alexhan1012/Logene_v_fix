@@ -2,9 +2,10 @@ import { Router } from 'express'
 import multer from 'multer'
 import path from 'path'
 import { fileURLToPath } from 'url'
-import { readFileSync, mkdirSync, unlinkSync } from 'fs'
+import { readFileSync, mkdirSync } from 'fs'
 import { getPool, getSettings } from '../services/db.js'
 import { analyzeImageWithVLM, analyzeTextWithModel, generateEmbedding } from '../services/volcanoEngine.js'
+import { cleanupFile } from '../utils/fileCleanup.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const UPLOADS_DIR = path.join(__dirname, '../../uploads')
@@ -19,12 +20,38 @@ const storage = multer.diskStorage({
 })
 const upload = multer({ storage, limits: { fileSize: 20 * 1024 * 1024 } })
 
+const PAGE_SIZE_MAX = 100
+const PAGE_SIZE_MIN = 1
+
 const router = Router()
+
+// GET /api/entries/stats - returns aggregate statistics
+router.get('/stats', async (req, res) => {
+  try {
+    const pool = getPool()
+    const result = await pool.query(`
+      SELECT
+        COUNT(*) AS total,
+        COUNT(*) FILTER (
+          WHERE date_trunc('month', created_at) = date_trunc('month', NOW())
+        ) AS this_month,
+        COUNT(*) FILTER (
+          WHERE date_trunc('day', created_at) = date_trunc('day', NOW())
+        ) AS today
+      FROM kb_entries
+    `)
+    res.json({ success: true, data: result.rows[0] })
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message })
+  }
+})
 
 router.get('/', async (req, res) => {
   try {
-    const { page = 1, pageSize = 10, search = '' } = req.query
-    const offset = (parseInt(page) - 1) * parseInt(pageSize)
+    const { page = 1, search = '' } = req.query
+    const rawPageSize = parseInt(req.query.pageSize) || 10
+    const pageSize = Math.min(Math.max(rawPageSize, PAGE_SIZE_MIN), PAGE_SIZE_MAX)
+    const offset = (parseInt(page) - 1) * pageSize
     const pool = getPool()
 
     let countQuery = 'SELECT COUNT(*) FROM kb_entries'
@@ -42,7 +69,7 @@ router.get('/', async (req, res) => {
 
     const [countResult, dataResult] = await Promise.all([
       pool.query(countQuery, params),
-      pool.query(dataQuery, [...params, parseInt(pageSize), offset]),
+      pool.query(dataQuery, [...params, pageSize, offset]),
     ])
 
     res.json({
@@ -50,7 +77,7 @@ router.get('/', async (req, res) => {
       data: dataResult.rows,
       total: parseInt(countResult.rows[0].count),
       page: parseInt(page),
-      pageSize: parseInt(pageSize),
+      pageSize,
     })
   } catch (err) {
     res.status(500).json({ success: false, error: err.message })
@@ -118,11 +145,7 @@ router.post('/', upload.single('image'), async (req, res) => {
 
     res.json({ success: true, data: result.rows[0] })
   } catch (err) {
-    if (imageFile) {
-      try { unlinkSync(imageFile.path) } catch (cleanupErr) {
-        console.error('Failed to clean up temp file:', cleanupErr.message)
-      }
-    }
+    cleanupFile(imageFile?.path)
     res.status(500).json({ success: false, error: err.message })
   }
 })
@@ -147,11 +170,7 @@ router.delete('/:id', async (req, res) => {
     if (entry.rows.length === 0) {
       return res.status(404).json({ success: false, error: 'Entry not found' })
     }
-    if (entry.rows[0].image_path) {
-      try { unlinkSync(entry.rows[0].image_path) } catch (cleanupErr) {
-        console.error('Failed to clean up image file:', cleanupErr.message)
-      }
-    }
+    cleanupFile(entry.rows[0].image_path)
     await pool.query('DELETE FROM kb_entries WHERE id = $1', [req.params.id])
     res.json({ success: true })
   } catch (err) {
@@ -160,3 +179,4 @@ router.delete('/:id', async (req, res) => {
 })
 
 export default router
+

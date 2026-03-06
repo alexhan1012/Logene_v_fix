@@ -55,7 +55,8 @@ async function analyzeImageWithVLM(imageBase64, textDescription, model = 'doubao
       return JSON.parse(jsonMatch[0])
     }
     return JSON.parse(content)
-  } catch {
+  } catch (e) {
+    console.warn('VLM response was not valid JSON, using raw content as summary:', e.message)
     return {
       phenomenon: content,
       error_codes: '',
@@ -94,7 +95,8 @@ async function analyzeTextWithModel(textDescription, model = 'doubao-1-5-pro-32k
       return JSON.parse(jsonMatch[0])
     }
     return JSON.parse(content)
-  } catch {
+  } catch (e) {
+    console.warn('Text model response was not valid JSON, using raw content as summary:', e.message)
     return {
       phenomenon: textDescription,
       error_codes: '',

@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react'
-import { Form, Input, Button, Card, Select, message, Typography, Divider, Space, Alert } from 'antd'
+import { Form, Input, Button, Card, Select, message, Typography, Divider, Space, Alert, Slider, InputNumber } from 'antd'
 import { SaveOutlined, ApiOutlined, DatabaseOutlined } from '@ant-design/icons'
 
-const { Title, Text } = Typography
+const { Title } = Typography
 
 export default function Settings({ baseURL }) {
   const [form] = Form.useForm()
@@ -23,7 +23,12 @@ export default function Settings({ baseURL }) {
         const modelsData = await modelsRes.json()
 
         if (settingsData.success) {
-          form.setFieldsValue(settingsData.data)
+          const data = settingsData.data
+          form.setFieldsValue({
+            ...data,
+            search_limit: parseInt(data.search_limit) || 5,
+            similarity_threshold: parseFloat(data.similarity_threshold) || 0.5,
+          })
         }
         if (modelsData.success) {
           setModels(modelsData.data)
@@ -84,7 +89,7 @@ export default function Settings({ baseURL }) {
           }
         >
           {testStatus === 'success' && <Alert type="success" message="连接成功" style={{ marginBottom: 16 }} />}
-          {testStatus === 'error' && <Alert type="error" message="连接失败" style={{ marginBottom: 16 }} />}
+          {testStatus === 'error' && <Alert type="error" message="连接失败，请检查数据库配置" style={{ marginBottom: 16 }} />}
 
           <Form.Item label="数据库主机" name="db_host">
             <Input placeholder="localhost" />
@@ -107,7 +112,7 @@ export default function Settings({ baseURL }) {
           title={<Space><ApiOutlined />API & 模型设置</Space>}
           style={{ borderRadius: 12, marginBottom: 16 }}
         >
-          <Form.Item label="API Key" name="api_key">
+          <Form.Item label="API Key（火山引擎）" name="api_key">
             <Input.Password placeholder="Volcano Engine API Key" />
           </Form.Item>
 
@@ -119,18 +124,27 @@ export default function Settings({ baseURL }) {
             <Select options={models.embedding} placeholder="选择Embedding模型" />
           </Form.Item>
 
-          <Form.Item label="文本模型" name="text_model">
+          <Form.Item label="文本模型（纯文字分析）" name="text_model">
             <Select options={models.text} placeholder="选择文本模型" />
           </Form.Item>
 
           <Divider />
 
-          <Form.Item label="搜索结果数量" name="search_limit">
-            <Input type="number" min={1} max={20} />
+          <Form.Item label="搜索结果数量（1-20）" name="search_limit">
+            <InputNumber min={1} max={20} style={{ width: '100%' }} />
           </Form.Item>
 
-          <Form.Item label="相似度阈值（0-1）" name="similarity_threshold">
-            <Input type="number" min={0} max={1} step={0.05} />
+          <Form.Item
+            label={`相似度阈值（0 = 返回所有结果，1 = 只返回完全匹配）`}
+            name="similarity_threshold"
+          >
+            <Slider
+              min={0}
+              max={1}
+              step={0.05}
+              marks={{ 0: '0', 0.5: '0.5', 1: '1' }}
+              tooltip={{ formatter: v => `${v}` }}
+            />
           </Form.Item>
         </Card>
 
