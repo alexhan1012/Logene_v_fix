@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_BASE = 'http://localhost:3001/api';
+export const SERVER_BASE = 'http://localhost:3001';
+const API_BASE = `${SERVER_BASE}/api`;
 
 const client = axios.create({
   baseURL: API_BASE,
