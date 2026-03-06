@@ -8,7 +8,7 @@ module.exports = {
     password: process.env.DB_PASSWORD || 'postgres',
   },
   volcEngine: {
-    apiKey: process.env.VOLC_API_KEY || '',
+    apiKey: process.env.VOLC_API_KEY || '20efb8c0-01f7-4d1d-a6d2-9fe6adc84d3c',
     baseUrl: process.env.VOLC_BASE_URL || 'https://ark.cn-beijing.volces.com/api/v3',
   },
   defaultModels: {
