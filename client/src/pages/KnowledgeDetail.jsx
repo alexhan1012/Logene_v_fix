@@ -74,8 +74,8 @@ export default function KnowledgeDetail() {
     );
   }
 
-  const imageUrl = data.image_path
-    ? `${SERVER_BASE}${data.image_path}`
+  const imageUrl = data.error_image_path
+    ? `${SERVER_BASE}${data.error_image_path}`
     : null;
 
   return (

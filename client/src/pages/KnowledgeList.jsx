@@ -32,13 +32,13 @@ export default function KnowledgeList() {
     setLoading(true);
     try {
       const res = await api.knowledge.list(page, pageSize);
-      const result = res.data;
-      setData(result.data || result.items || result || []);
+      const result = res.data.data || res.data;
+      setData(result.items || []);
       setPagination((prev) => ({
         ...prev,
         current: page,
         pageSize,
-        total: result.total || result.pagination?.total || 0,
+        total: result.total || 0,
       }));
     } catch (err) {
       message.error(err.message || '加载失败');

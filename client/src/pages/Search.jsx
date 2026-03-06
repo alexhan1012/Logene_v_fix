@@ -37,10 +37,10 @@ export default function Search() {
     try {
       const formData = new FormData();
       if (image) formData.append('image', image);
-      if (description.trim()) formData.append('description', description.trim());
+      if (description.trim()) formData.append('text_description', description.trim());
 
       const res = await api.search(formData);
-      setResults(res.data.results || res.data || []);
+      setResults(res.data.data || res.data.results || []);
     } catch (err) {
       message.error(err.message || '检索失败');
     } finally {

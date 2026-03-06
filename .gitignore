@@ -11,4 +11,5 @@ Thumbs.db
 coverage/
 .vite/
 release/
+server/uploads/
 uploads/
